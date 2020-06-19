@@ -5,6 +5,8 @@
 library(mclust)
 library(mlr)
 library(tidyverse)
+library(kknn)
+
 
 # load the data
 
@@ -27,7 +29,7 @@ ggplot(diabetesTib, aes(sspg, glucose, colour=class)) +
 
 ######## 1. DEFINE A TASK:
 # what is a task in mlr? a task is a definition that you want to achieve:
-# - you need tho specify the dataset 
+# - you need to specify the dataset 
 # - the target variable (in this case, categorical)
 # now we want to train it
 
@@ -69,15 +71,62 @@ kfoldCV <- resample(learner=knn,
 
 # confusion matrix
 calculateConfusionMatrix(kfoldCV$pred)
+roc <- generateThreshVsPerfData(kfoldCV$pred, list(fpr, tpr))
+
+# ----------------------- summary
+# the buinding blocks of mlr:
+# 1. Task (classification, regression, clustering, survival)
+# 2. Learner (conceptual description of the machine learning algorithm)
+# 3. Train: training the supervised learning models based on the task
+# 4. Predict: using the models to make predictions (on new data)
+# 5. performance and resampling: assessing a model's quality
+# 6. benchmarking: comparison of meny different learners on many different tasks
+# 7. tuning: optimizing learner's hyperparameters
+# 8. feature selection: looking for a better subset of features
 
 
+# load the dataset and split the data randomly into training (600) and test (246)
+df.veh <- read.csv(file.choose())
+
+set.seed(42)
+rows <- sample(nrow(df.veh))
+random.veh <- df.veh[rows, ]
+train.veh <- random.veh[1:600, ]
+test.veh <- random.veh[601:846, ]
+
+# create the corresponding classification task
+task <- makeClassifTask(data=train.veh, target="Class")
+
+# define a learner
+learner1 <- makeLearner("classif.knn", par.vals = list("k" = 10))
+
+# train
+knnModel <- train(learner1, task)
+
+# predict
+pred1 <- predict(knnModel, newdata = test.veh)
+
+# performance
+table(pred1$data[, c("truth", "response")])
+performance(pred = pred1, measures = list(mmce, acc))
 
 
+# comparison with more k
+sqrt(600)
+# let's try with 29 ks
 
+# define a learner
+learner2 <- makeLearner("classif.knn", par.vals = list("k" = 4))
 
+# train
+knnModel2 <- train(learner2, task)
 
+# predict
+pred2 <- predict(knnModel2, newdata = test.veh)
 
-
+# performance
+table(pred2$data[, c("truth", "response")])
+performance(pred = pred2, measures = list(mmce, acc))
 
 
 
