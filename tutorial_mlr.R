@@ -111,9 +111,7 @@ table(pred1$data[, c("truth", "response")])
 performance(pred = pred1, measures = list(mmce, acc))
 
 
-# comparison with more k
-sqrt(600)
-# let's try with 29 ks
+# comparison with less ks
 
 # define a learner
 learner2 <- makeLearner("classif.knn", par.vals = list("k" = 4))
@@ -129,6 +127,31 @@ table(pred2$data[, c("truth", "response")])
 performance(pred = pred2, measures = list(mmce, acc))
 
 
+# try with random forest
+listLearners()$class
+
+learner3 <- makeLearner("classif.randomForest")
+rfModel <- train(learner3, task)
+pred3 <- predict(rfModel, newdata = test.veh)
+
+table(pred3$data[, c("truth", "response")])
+performance(pred = pred3, measures = list(mmce, acc))
+
+
+
+
+
+# ---------------------------- resampling techniques
+
+rdesc <- makeResampleDesc(method = "Holdout", split = 4/5) 
+rinst <- makeResampleInstance(desc = rdesc, task = task) # here you select a task that contains the whole dataset
+res <- resample(learner = learner3, task=task, resampling = rinst)
+
+# there are some alternative techniques to holdout
+
+# in this case, it worked with the training dataset (line 91).
+length(rinst$train.inds[[1]])
+length(rinst$test.inds[[1]])
 
 
 
