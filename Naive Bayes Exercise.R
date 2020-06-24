@@ -75,6 +75,70 @@ calculateConfusionMatrix(kfoldCV$pred)
 # note: naive bayes works very well with spam detection (probability of finding words in an email)
 # why naive??? strong assumption: independence between features
 
+illness <- read.csv("illness.csv")
+illness$X <- NULL
+illness$class <- factor(illness$class)
+colnames(illness) <- c("height", "weight", "class")
+
+ggplot(data = illness, aes(x = height, y = weight, color = class)) +
+  geom_point(size=3.5)
+
+### 1. Calculate the a-priori probabilities of class C1 and C
+
+nrow(illness[illness$class == "healthy",]) /
+  (nrow(illness[illness$class == "healthy",]) + nrow(illness[illness$class == "sick",]))
+  
+### 2. Calculate the parameters for all class-conditional Gaussian densities
+
+# means
+
+healthy.mean <- apply(illness[illness$class == "healthy", 1:2], 2, mean)
+
+sick.mean <- apply(illness[illness$class == "sick", 1:2], 2, mean)
+
+healthy.sd <- apply(illness[illness$class == "healthy", 1:2], 2, 
+                    function(x) sqrt(var(x)))
+sick.sd <- apply(illness[illness$class == "sick", 1:2], 2, 
+                 function(x) sqrt(var(x)))
+
+healthy.mean
+sick.mean
+healthy.sd
+sick.sd
+
+### 4. To which class the new observation x = (1.6,74) will be assigned by the model? 
+# hint: the dnorm function might be  (density)
+
+density.healthy.mean <- dnorm(1.6, mean = healthy.mean[1], sd = healthy.sd[1])
+density.healthy.sd <- dnorm(74, mean = healthy.mean[2], sd = healthy.sd[2])
+
+density.sick.mean <- dnorm(1.6, mean = sick.mean[1], sd = sick.sd[1])
+density.sick.sd <- dnorm(74, mean = sick.mean[2], sd = sick.sd[2])
+
+density.healthy.mean * density.healthy.sd * 0.5
+density.sick.mean * density.sick.sd * 0.5
+
+# it is classified as "healthy"
+
+### 5 Write an R function predict(x) which assigns a new observation either 
+# to class healthy or sick.
+# x is a vector -> c(height, weight)
+
+predict <- function(x){
+  healthy.score = dnorm(x[1], mean = healthy.mean[1], sd = healthy.sd[1]) * 
+    dnorm(x[2], mean = healthy.mean[2], sd = healthy.sd[2]) * 0.5
+  sick.score = dnorm(x[1], mean = sick.mean[1], sd = sick.sd[1]) * 
+    dnorm(x[2], mean = sick.mean[2], sd = sick.sd[2]) * 0.5
+  if(healthy.score > sick.score){
+    print("The patient is healthy")
+  }else{
+    print("The patient is sick")
+  }
+}
+
+patient1 <- c(1.8, 90)
+
+predict(patient1)
 
 
 
