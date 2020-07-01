@@ -149,6 +149,26 @@ mod
 
 # in any case, you do not have to split the data by yourself, many resample stratgies are supported by mlr
 
+################# 4. PREDICTIONS  
+# Predicting the target values for new observations is implemented the same way as most of the other predict methods in R.
+#  n general, all you need to do is call predict (predict.WrappedModel()) on the object returned by train() ...
+# ... and pass the data you want predictions for.
+
+# it is reccommended to pass the data with new.data (the testing one). There are many methods for resampling
+set.seed(101)
+random <- sample(nrow(iris))
+iris.train <- iris[random,][1:100,]
+iris.test <- iris[random,][101:150,]
+
+str(iris.train)
+
+task <- makeClassifTask(data=iris.train, target="Species")
+mod <- train("classif.randomForest", task)
+
+newdata.pred = predict(mod, newdata = iris.test)
+newdata.pred
+
+
 
 
 
