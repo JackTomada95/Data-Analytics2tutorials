@@ -165,8 +165,94 @@ str(iris.train)
 task <- makeClassifTask(data=iris.train, target="Species")
 mod <- train("classif.randomForest", task)
 
-newdata.pred = predict(mod, newdata = iris.test)
+newdata.pred <- predict(mod, newdata = iris.test)
 newdata.pred
+
+newdata.pred$data$response
+
+# accessing the prediction
+
+# the most important one i the dataframe
+is.data.frame(task.pred$data)
+
+# extract the information: very easy
+head(as.data.frame(task.pred))
+head(as.data.frame(newdata.pred))
+round(getPredictionResponse(task.pred),1)
+
+# Regression: Extracting standard errors
+listLearners()$class
+
+lrn.lm <- makeLearner("regr.lm", predict.type = 'se')
+mod.lm <- train(lrn.lm, bh.task, subset = train.set)
+task.pred.lm <- predict(mod.lm, task = bh.task, subset = test.set)
+df <- task.pred.lm$data
+
+# Classificationand Clustering: extracting the probabilities
+
+lrn <- makeLearner("cluster.cmeans", predict.type = "prob")
+mod <- train(lrn, mtcars.task)
+
+pred <- predict(mod, task = mtcars.task)
+head(getPredictionProbabilities(pred)) # probability of belonging to a certain cluster
+
+mod <- train("classif.lda", task = iris.task) # linear discriminant analysis
+
+pred <- predict(mod, task = iris.task)
+pred
+
+# in clasification tasks, in order to get predicted posterior probabilities we have to create a Learner (makeLearner()) 
+# with the appropriate predict.type.
+
+lrn <- makeLearner("classif.rpart", predict.type = "prob")
+mod <- train(lrn, iris.task) # note, with this modular approach we can try numerous learners on the same task
+
+pred <- predict(mod, newdata = iris)
+head(as.data.frame(pred))
+
+calculateConfusionMatrix(pred)
+
+# VERY IMPORTANT: Classification: Adjusting the decision threshold
+# you need to create a learner that predicts probabilities
+
+lrn <- makeLearner("classif.rpart", predict.type = "prob")
+mod <- train(lrn, task = sonar.task)
+
+getTaskDesc(sonar.task)$positive
+### Default threshold
+pred1 <- predict(mod, sonar.task)
+pred1$threshold # it is 0.5
+
+# you can change the threshold value for the positive class using serThreshold on the prediction
+pred2 <- setThreshold(pred1, 0.9)
+pred2$threshold
+
+calculateConfusionMatrix(pred1)
+calculateConfusionMatrix(pred2)
+
+head(getPredictionProbabilities(pred1))
+
+# for multiclass classififcation
+
+lrn <- makeLearner("classif.rpart", predict.type = "prob")
+mod <- train(lrn, iris.task)
+pred <- predict(mod, newdata = iris)
+pred$threshold # 33 percent
+
+table(as.data.frame(pred)$response)
+
+pred <- setThreshold(pred, c(setosa = 0.01, versicolor = 50, virginica = 1))
+pred$threshold
+
+table(as.data.frame(pred)$response)
+
+
+
+
+
+
+
+
 
 
 
